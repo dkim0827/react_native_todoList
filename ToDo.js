@@ -39,7 +39,9 @@ export default class ToDo extends Component {
                 styles.circle,
                 isCompleted ? styles.completedCircle : styles.uncompletedCircle
               ]}
-            />
+            >
+              {isCompleted && <Text style={styles.checkmark}>✓</Text>}
+            </View>
           </TouchableOpacity>
           {isEditing ? (
             <TextInput
@@ -53,6 +55,7 @@ export default class ToDo extends Component {
               onChangeText={this._controllInput}
               returnKeyType={"done"}
               onBlur={this._finishEditing}
+              underlineColorAndroid={'transparent'}
             />
           ) : (
             <Text
@@ -69,7 +72,7 @@ export default class ToDo extends Component {
           <View style={styles.actions}>
             <TouchableOpacity onPressOut={this._finishEditing}>
               <View style={styles.actionContainer}>
-                <Text style={styles.actionText}>✅</Text>
+                <Text style={styles.actionText}>🆗</Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -80,7 +83,12 @@ export default class ToDo extends Component {
                 <Text style={styles.actionText}>✏️</Text>
               </View>
             </TouchableOpacity>
-            <TouchableOpacity onPressOut={() => deleteToDo(id)}>
+            <TouchableOpacity
+              onPressOut={event => {
+                event.stopPropagation;
+                deleteToDo(id);
+              }}
+            >
               <View style={styles.actionContainer}>
                 <Text style={styles.actionText}>❌</Text>
               </View>
@@ -90,7 +98,8 @@ export default class ToDo extends Component {
       </View>
     );
   }
-  _toggleComplete = () => {
+  _toggleComplete = event => {
+    event.stopPropagation();
     const { isCompleted, uncompleteToDo, completeToDo, id } = this.props;
     if (isCompleted) {
       uncompleteToDo(id);
@@ -99,7 +108,8 @@ export default class ToDo extends Component {
     }
   };
 
-  _startEditing = () => {
+  _startEditing = event => {
+    event.stopPropagation();
     const { text } = this.props;
     this.setState({
       isEditing: true,
@@ -107,7 +117,8 @@ export default class ToDo extends Component {
     });
   };
 
-  _finishEditing = () => {
+  _finishEditing = event => {
+    event.stopPropagation();
     const { toDoValue } = this.state;
     const { id, updateToDo } = this.props;
     updateToDo(id, toDoValue);
@@ -135,15 +146,17 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 15,
-    borderColor: "red",
+    borderColor: "#22b8cf",
     borderWidth: 3,
     marginRight: 20
   },
   completedCircle: {
-    borderColor: "#bbb"
+    borderColor: "#22b8cf",
+    justifyContent: "center",
+    alignItems: "center"
   },
   uncompletedCircle: {
-    borderColor: "#F23657"
+    borderColor: "#22b8cf"
   },
   text: {
     fontWeight: "600",
@@ -173,5 +186,13 @@ const styles = StyleSheet.create({
     width: width / 2,
     marginVertical: 15,
     paddingBottom: 5
+  },
+  checkmark: {
+    color: "#3bc9db",
+    fontWeight: "800",
+    fontSize: 20
+  },
+  actionText: {
+    fontSize: 20
   }
 });

@@ -7,7 +7,8 @@ import {
   TextInput,
   Dimensions,
   Platform,
-  ScrollView
+  ScrollView,
+  AsyncStorage
 } from "react-native";
 import { AppLoading } from "expo";
 import ToDo from "./ToDo";
@@ -18,7 +19,7 @@ const { height, width } = Dimensions.get("window");
 export default class App extends React.Component {
   state = {
     newToDo: "",
-    loadedToDos: false,
+    isLoading: true,
     toDos: {}
   };
 
@@ -27,36 +28,39 @@ export default class App extends React.Component {
   };
 
   render() {
-    const { newToDo, loadedToDos, toDos } = this.state;
-    if (!loadedToDos) {
+    const { newToDo, isLoading, toDos } = this.state;
+    if (isLoading) {
       return <AppLoading />;
     }
     return (
       <View style={styles.container}>
         <StatusBar barStyle={"light-content"} />
-        <Text style={styles.title}>Kawai To Do</Text>
+        <Text style={styles.title}>THINGS TO DO</Text>
         <View style={styles.card}>
           <TextInput
             style={styles.input}
-            placeholder={"New To Do"}
+            placeholder={"What do you need to do?"}
             value={newToDo}
             onChangeText={this._controllNewToDo}
             placeholderTextColor={"#999"}
             returnKeyType={"done"}
             autoCorrect={false}
             onSubmitEditing={this._addToDo}
+            underlineColorAndroid={'transparent'}
           />
           <ScrollView contentContainerStyle={styles.toDos}>
-            {Object.values(toDos).map(toDo => (
-              <ToDo
-                key={toDo.id}
-                {...toDo}
-                deleteToDo={this._deleteToDo}
-                uncompleteToDo={this._uncompleteToDo}
-                completeToDo={this._completeToDo}
-                updateToDo={this._updateToDo}
-              />
-            ))}
+            {Object.values(toDos)
+              .reverse()
+              .map(toDo => (
+                <ToDo
+                  key={toDo.id}
+                  deleteToDo={this._deleteToDo}
+                  uncompleteToDo={this._uncompleteToDo}
+                  completeToDo={this._completeToDo}
+                  updateToDo={this._updateToDo}
+                  {...toDo}
+                />
+              ))}
           </ScrollView>
         </View>
       </View>
@@ -69,10 +73,14 @@ export default class App extends React.Component {
     });
   };
 
-  _loadToDos = () => {
-    this.setState({
-      loadedToDos: true
-    });
+  _loadToDos = async () => {
+    try {
+      const toDos = await AsyncStorage.getItem("toDoList");
+      const parsedToDos = JSON.parse(toDos);
+      this.setState({ isLoading: false, toDos: parsedToDos || {} });
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   _addToDo = () => {
@@ -96,6 +104,7 @@ export default class App extends React.Component {
             ...newToDoObject
           }
         };
+        this._saveToDos(newState.toDos);
         return { ...newState };
       });
     }
@@ -108,6 +117,7 @@ export default class App extends React.Component {
         ...prevState,
         ...toDos
       };
+      this._saveToDos(newState.toDos);
       return { ...newState };
     });
   };
@@ -124,6 +134,7 @@ export default class App extends React.Component {
           }
         }
       };
+      this._saveToDos(newState.toDos);
       return { ...newState };
     });
   };
@@ -140,6 +151,7 @@ export default class App extends React.Component {
           }
         }
       };
+      this._saveToDos(newState.toDos);
       return { ...newState };
     });
   };
@@ -156,15 +168,23 @@ export default class App extends React.Component {
           }
         }
       };
+      this._saveToDos(newState.toDos);
       return { ...newState };
     });
+  };
+
+  _saveToDos = newToDos => {
+    const saveToDos = AsyncStorage.setItem(
+      "toDoList",
+      JSON.stringify(newToDos)
+    );
   };
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F23657",
+    backgroundColor: "#22b8cf",
     alignItems: "center"
   },
   title: {
@@ -182,7 +202,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 10,
     ...Platform.select({
       ios: {
-        shadowColor: "rgb(50, 50, 50)",
+        shadowColor: "rgba(0, 0, 0, 0.23)",
         shadowOpacity: 0.5,
         shadowRadius: 5,
         shadowOffset: {
@@ -197,9 +217,9 @@ const styles = StyleSheet.create({
   },
   input: {
     padding: 20,
-    borderBottomColor: "#bbb",
-    borderBottomWidth: 1,
-    fontSize: 25
+    borderBottomColor: "#22b8cf",
+    borderBottomWidth: 2,
+    fontSize: 20
   },
   toDos: {
     alignItems: "center"
