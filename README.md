@@ -1,2 +1,2 @@
-# react_native_todoList
+# Kawai To Do list
 Todo List with react native
